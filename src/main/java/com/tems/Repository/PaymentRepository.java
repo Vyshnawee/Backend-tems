@@ -15,4 +15,19 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
 	
 	@Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p")
     double getTotalPaid();
+	
+	@Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p")
+    double getTotalAmount();
+
+    //  Paid amount
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.status = 'PAID'")
+    double getPaidAmount();
+
+    //  Pending amount
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.status = 'PENDING'")
+    double getPendingAmount();
+
+    //  Failed amount
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.status = 'FAILED'")
+    double getFailedAmount();
 }

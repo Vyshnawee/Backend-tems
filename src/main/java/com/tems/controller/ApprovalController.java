@@ -21,7 +21,7 @@ public class ApprovalController {
     @PostMapping("/approve/{expenseId}")
     public ResponseEntity<String> approveExpense(
             @PathVariable Integer expenseId,
-            @RequestParam Integer userId   // 👈 add this
+            @RequestParam Integer userId   
     ) {
         approvalService.approveExpense(expenseId, userId);
         return ResponseEntity.ok("Approved");

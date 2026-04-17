@@ -8,10 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.tems.IService.IUserService;
-import com.tems.dto.LoginRequestDTO;
 import com.tems.dto.UserRegisterDTO;
 import com.tems.dto.UserResponseDTO;
 import com.tems.dto.UserUpdateDTO;
+import com.tems.model.User;
 
 @RestController
 @RequestMapping("/users")
@@ -70,22 +70,16 @@ public class UserController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO request) {
-
-        try {
-            UserResponseDTO response = userService.login(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid email or password");
-        }
-    }
     
     @GetMapping("/available-employees")
     public List<UserResponseDTO> getAvailableEmployees() {
         return userService.getAvailableEmployees();
     }
-    
-    
-    
+
+    @PutMapping("/profile/{id}")
+    public UserResponseDTO updateProfile(@PathVariable Integer id,
+                              @RequestBody User user) {
+        return userService.updateProfile(id, user);
+    }
+      
 }

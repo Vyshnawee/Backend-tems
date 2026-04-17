@@ -15,13 +15,16 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends JpaRepository<User, Integer> {
 	Optional<User> findByUserName(String userName);
 	
-	@Query("SELECT u FROM User u JOIN FETCH u.team WHERE u.email = :email")
-	Optional<User> findByEmail(@Param("email") String email);
-	
 	List<User> findByTeam_TeamId(Integer teamId);
 	
 	@Query("SELECT u FROM User u WHERE u.team IS NULL AND u.role.roleName = 'EMPLOYEE'")
     List<User> findAvailableEmployees();
 
 	Optional<User> findByEmailIgnoreCase(String email);
-}
+	
+	@Query("SELECT COUNT(u) FROM User u")
+	Long countUsers();
+	
+	List<User> findByTeam_TeamIdAndRole_RoleName(Integer teamId, String roleName);
+	
+	List<User> findByRole_RoleName(String roleName);}

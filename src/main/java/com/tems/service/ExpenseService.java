@@ -14,9 +14,9 @@ import com.tems.dto.ExpenseResponseDTO;
 import com.tems.exception.ResourceNotFoundException;
 import com.tems.model.Expense;
 import com.tems.model.User;
-
-
+import com.tems.model.Approval;
 import com.tems.model.Category;
+import com.tems.Repository.ApprovalRepository;
 import com.tems.Repository.CategoryRepository;
 import com.tems.Repository.ExpenseRepository;
 import com.tems.Repository.UserRepository;
@@ -32,41 +32,75 @@ public class ExpenseService implements IExpenseService {
     
     @Autowired
     private CategoryRepository categoryRepository;
+    
+    @Autowired
+    private ApprovalRepository approvalRepository;
+    
+    @Autowired
+    private NotificationService notificationService;
 
     public ExpenseResponseDTO createExpense(
             ExpenseRequestDTO dto,
             Integer userId
     ) {
 
+        // Create Expense
         Expense expense = new Expense();
 
         expense.setTitle(dto.getTitle());
         expense.setAmount(dto.getAmount());
         expense.setDescription(dto.getDescription());
-
-        // ✅ Just set URL (already prepared in controller)
         expense.setReceiptUrl(dto.getReceiptUrl());
 
-        // 🔹 Category
+        //  Set Category
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
         expense.setCategory(category);
 
-        // 🔹 User
+        //  Set User
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         expense.setUser(user);
 
-        // 🔹 Status
+        //  Default Status
         expense.setStatus("PENDING");
 
+        //  Save Expense
         Expense savedExpense = expenseRepository.save(expense);
 
+        //  Create Approval (VERY IMPORTANT)
+        Approval approval = new Approval();
+        approval.setExpense(savedExpense);
+        approval.setStatus("PENDING");
+        approval.setApprover(null);              
+        approval.setApprovedAt(null);           
+        approval.setComments(null);           
+
+        approvalRepository.save(approval);
+        
+        try {
+            Integer teamId = user.getTeam().getTeamId(); 
+
+            List<User> managers = userRepository.findByTeam_TeamIdAndRole_RoleName(teamId, "MANAGER");
+
+            for (User manager : managers) {
+                notificationService.createNotification(
+                        "New expense submitted by " + user.getUserName() +
+                        " (₹" + savedExpense.getAmount() + ")",
+                        manager,
+                        "SUBMITTED"
+                );
+            }
+
+        } catch (Exception e) {
+            System.out.println("Notification failed: " + e.getMessage());
+        }
+        
+
+        //  Return DTO
         return ExpenseMapper.toDTO(savedExpense);
     }
 
-
-     
 
     //  GET BY ID
     @Override
@@ -152,16 +186,16 @@ public class ExpenseService implements IExpenseService {
             dto.setReceiptUrl(expense.getReceiptUrl());
             dto.setStatus(expense.getStatus());
 
-            // ✅ Category
+            //  Category
             if (expense.getCategory() != null) {
                 dto.setCategoryName(expense.getCategory().getName());
             }
 
-            // ✅ User (Employee Name)
+            //  User (Employee Name)
             if (expense.getUser() != null) {
                 dto.setUserName(expense.getUser().getUserName());
 
-                // ✅ Team Name (IMPORTANT)
+                //  Team Name (IMPORTANT)
                 if (expense.getUser().getTeam() != null) {
                     dto.setTeamName(expense.getUser().getTeam().getTeamName());
                 }
@@ -189,23 +223,23 @@ public class ExpenseService implements IExpenseService {
             dto.setAmount(expense.getAmount());
             dto.setStatus(expense.getStatus());
 
-            // ✅ Employee name
+            // s Employee name
             if (expense.getUser() != null) {
                 dto.setUserName(expense.getUser().getUserName());
             }
 
-            // ✅ Team name
+            //  Team name
             if (expense.getUser() != null && expense.getUser().getTeam() != null) {
                 dto.setTeamName(expense.getUser().getTeam().getTeamName());
             }
 
-            // ✅ Paid date (IMPORTANT)
+            //  Paid date (IMPORTANT)
             dto.setPaidAt(expense.getPaidAt());
 
             return dto;
 
         }).toList();
     }
-    
+   
     
 }

@@ -17,7 +17,7 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
-    // ✅ Create Stripe Checkout Session
+    //  Create Stripe Checkout Session
     @PostMapping("/create-checkout-session/{expenseId}")
     public ResponseEntity<?> createCheckoutSession(@PathVariable Integer expenseId) {
         try {
@@ -46,6 +46,5 @@ public class PaymentController {
 
         return "Payment recorded successfully!";
     }
-    
     
 }

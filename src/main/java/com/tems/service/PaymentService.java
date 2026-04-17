@@ -5,9 +5,13 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.tems.model.Expense;
 import com.tems.model.Payment;
+
+import jakarta.transaction.Transactional;
+
 import com.tems.Repository.ExpenseRepository;
 import com.tems.Repository.PaymentRepository;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +19,9 @@ import java.time.LocalDateTime;
 
 @Service
 public class PaymentService {
+	
+	@Autowired
+	private NotificationService notificationService;
 
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
@@ -83,6 +90,7 @@ public class PaymentService {
         expenseRepository.save(expense);
     }
     
+    @Transactional
     public void handlePaymentSuccess(String sessionId, Integer expenseId) throws Exception {
 
         Stripe.apiKey = stripeSecretKey;
@@ -112,6 +120,17 @@ public class PaymentService {
         expense.setPaidAt(LocalDateTime.now());
 
         expenseRepository.save(expense);
+        
+        try {
+            notificationService.createNotification(
+                "Payment of ₹" + payment.getAmount() +
+                " for \"" + expense.getTitle() + "\" completed successfully",
+                expense.getUser(),
+                "PAYMENT"
+            );
+        } catch (Exception e) {
+            System.out.println("Notification failed: " + e.getMessage());
+        }
     }
 
 }

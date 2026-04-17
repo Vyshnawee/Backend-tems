@@ -17,7 +17,7 @@ public class Approval {
     private Expense expense;
 
     @ManyToOne
-    @JoinColumn(name = "approver_id", nullable = false)
+    @JoinColumn(name = "approver_id", nullable = true)
     private User approver;
 
     @Column(nullable = false)
@@ -28,7 +28,6 @@ public class Approval {
     private LocalDateTime approvedAt;
 
     public Approval() {
-        this.approvedAt = LocalDateTime.now();
     }
 
     public Approval(Integer approvalId, Expense expense, User approver,

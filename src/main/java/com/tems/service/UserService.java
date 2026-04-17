@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.tems.IService.IUserService;
-import com.tems.dto.LoginRequestDTO;
 import com.tems.dto.UserMapper;
 import com.tems.dto.UserRegisterDTO;
 import com.tems.dto.UserResponseDTO;
@@ -31,6 +31,9 @@ public class UserService implements IUserService {
     
     @Autowired
     private TeamRepository teamRepository;
+    
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     @Override
     public UserResponseDTO createUser(UserRegisterDTO request) {
@@ -41,8 +44,7 @@ public class UserService implements IUserService {
         User user = new User();
         user.setUserName(request.getUserName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
-
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(role);   
 
         User saved = userRepository.save(user);
@@ -118,38 +120,7 @@ public class UserService implements IUserService {
 
         return UserMapper.toDTO(user);
     }
-    
-    @Override
-    public UserResponseDTO login(LoginRequestDTO request) {
 
-        String email = request.getEmail().trim().toLowerCase();
-
-        User user = userRepository.findByEmailIgnoreCase(email).orElse(null);
-
-        // ❌ Invalid login
-        if (user == null || !user.getPassword().equals(request.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
-        }
-
-        UserResponseDTO dto = new UserResponseDTO();
-
-        dto.setUserId(user.getUserId());
-        dto.setUserName(user.getUserName());
-        dto.setEmail(user.getEmail());
-
-        // ✅ ROLE FIX
-        if (user.getRole() != null) {
-            dto.setRole(user.getRole().getRoleName());  // ADMIN / MANAGER / EMPLOYEE
-        }
-
-        // ✅ TEAM
-        if (user.getTeam() != null) {
-            dto.setTeamId(user.getTeam().getTeamId());
-            dto.setTeamName(user.getTeam().getTeamName());
-        }
-
-        return dto;
-    }
     @Override
     public List<User> getUsersByTeam(Integer teamId) {
         return userRepository.findByTeam_TeamId(teamId);
@@ -177,6 +148,18 @@ public class UserService implements IUserService {
         return users.stream()
                 .map(UserMapper::toDTO)
                 .toList();
+    }
+
+    public UserResponseDTO updateProfile(Integer userId, User updatedUser) {
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setUserName(updatedUser.getUserName());
+
+        User savedUser = userRepository.save(user);
+
+        return UserMapper.toDTO(savedUser);
     }
     
 }

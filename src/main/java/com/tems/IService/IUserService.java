@@ -2,7 +2,6 @@ package com.tems.IService;
 
 import java.util.List;
 
-import com.tems.dto.LoginRequestDTO;
 import com.tems.dto.UserRegisterDTO;
 import com.tems.dto.UserResponseDTO;
 import com.tems.dto.UserUpdateDTO;
@@ -21,10 +20,10 @@ public interface IUserService {
     void deleteUserById(Integer userId);
 
     UserResponseDTO getUserByUserName(String userName);
-    
-    UserResponseDTO login(LoginRequestDTO request);
-    
+        
     List<User> getUsersByTeam(Integer teamId);
     
     List<UserResponseDTO> getAvailableEmployees();
+        
+    public UserResponseDTO updateProfile(Integer userId, User updatedUser);
 }
